@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
 import CrimeRiskMap from './CrimeRiskMap';
 import CrimeAnalytics from './CrimeAnalytics';
 import IntelligencePage from './IntelligencePage';
@@ -51,29 +51,9 @@ import {
 } from 'recharts';
 
 
-const crimeTrendData = [
-  { month: 'Jan', incidents: 4200 },
-  { month: 'Feb', incidents: 4800 },
-  { month: 'Mar', incidents: 5100 },
-  { month: 'Apr', incidents: 4700 },
-  { month: 'May', incidents: 5900 },
-  { month: 'Jun', incidents: 6400 },
-  { month: 'Jul', incidents: 6100 },
-  { month: 'Aug', incidents: 7200 },
-  { month: 'Sep', incidents: 6800 },
-  { month: 'Oct', incidents: 7600 },
-  { month: 'Nov', incidents: 8100 },
-  { month: 'Dec', incidents: 8600 },
-];
 
 
-const crimeCategoryData = [
-  { name: 'Theft', value: 34 },
-  { name: 'Cybercrime', value: 24 },
-  { name: 'Assault', value: 18 },
-  { name: 'Fraud', value: 14 },
-  { name: 'Robbery', value: 10 },
-];
+
 
 
 const navigation = [
@@ -173,6 +153,54 @@ function App() {
 
   const [activePage, setActivePage] =
     useState('Command Center');
+
+   const [dashboardData, setDashboardData] = useState({
+  totalRecords: 0,
+  hotspots: 0,
+  predictions: 0,
+  accuracy: 0,
+}); 
+
+const [crimeTrendData, setCrimeTrendData] = useState([]);
+
+const [crimeCategoryData, setCrimeCategoryData] = useState([]);
+
+const [recentIncidents, setRecentIncidents] = useState([]);
+
+const [aiInsight, setAiInsight] = useState({
+  title: "",
+  summary: "",
+  confidence: 0,
+});
+
+useEffect(() => {
+
+  fetch("http://127.0.0.1:5000/summary")
+    .then((res) => res.json())
+    .then((data) => setDashboardData(data))
+    .catch((err) => console.log(err));
+
+  fetch("http://127.0.0.1:5000/trend")
+    .then((res) => res.json())
+    .then((data) => setCrimeTrendData(data))
+    .catch((err) => console.log(err));
+
+  fetch("http://127.0.0.1:5000/crime-types")
+  .then((res) => res.json())
+  .then((data) => setCrimeCategoryData(data))
+  .catch((err) => console.log(err));
+
+  fetch("http://127.0.0.1:5000/recent-incidents")
+  .then((res) => res.json())
+  .then((data) => setRecentIncidents(data))
+  .catch((err) => console.log(err));
+
+  fetch("http://127.0.0.1:5000/ai-insight")
+  .then((res) => res.json())
+  .then((data) => setAiInsight(data))
+  .catch((err) => console.log(err));
+
+}, []);
 
 
   return (
@@ -518,7 +546,7 @@ function App() {
 
             <StatCard
               title="Total Crime Records"
-              value="2.4M"
+              value={dashboardData.total_cases}
               change="12.8%"
               positive={true}
               icon={Database}
@@ -528,7 +556,7 @@ function App() {
 
             <StatCard
               title="Active Hotspots"
-              value="247"
+              value={dashboardData.top_state}
               change="8.4%"
               positive={false}
               icon={MapPin}
@@ -538,7 +566,7 @@ function App() {
 
             <StatCard
               title="AI Predictions"
-              value="12,480"
+              value={dashboardData.top_crime}
               change="24.6%"
               positive={true}
               icon={BrainCircuit}
@@ -820,18 +848,14 @@ function App() {
 
                 <div>
 
-                  <h3>
-                    Cybercrime Surge Detected
-                  </h3>
+                 <h3>
+  Cybercrime Surge Detected
+</h3>
 
 
-                  <p>
-
-                    Cybercrime activity has increased
-                    by 28% in the last 30 days compared
-                    to the previous period.
-
-                  </p>
+                 <p>
+  {aiInsight.summary}
+</p>
 
                 </div>
 
@@ -845,8 +869,8 @@ function App() {
                 </span>
 
                 <strong>
-                  94%
-                </strong>
+{aiInsight.confidence}%
+</strong>
 
               </div>
 
@@ -855,7 +879,7 @@ function App() {
 
                 <div
                   style={{
-                    width: '94%',
+                    width: `${aiInsight.confidence}%`,
                   }}
                 />
 
@@ -904,139 +928,43 @@ function App() {
               </div>
 
 
-              <div className="incident-list">
+             <div className="incident-list">
 
+  {recentIncidents.map((incident, index) => (
 
-                <div className="incident-item">
+    <div className="incident-item" key={index}>
 
-                  <div className="incident-status critical" />
+      <div className="incident-status critical" />
 
-                  <div className="incident-content">
+      <div className="incident-content">
 
-                    <div className="incident-title-row">
+        <div className="incident-title-row">
 
-                      <strong>
-                        CV-2026-08421
-                      </strong>
+          <strong>
+            {incident.id}
+          </strong>
 
-                      <span className="severity high">
-                        HIGH
-                      </span>
+          <span className="severity high">
+            {incident.cases} Cases
+          </span>
 
-                    </div>
+        </div>
 
-                    <p>
-                      Cybercrime · Central District
-                    </p>
+        <p>
+          {incident.crime} · {incident.district}
+        </p>
 
-                  </div>
+      </div>
 
-                  <span className="incident-time">
-                    12m
-                  </span>
+    </div>
 
-                </div>
+  ))}
 
+</div>
 
-                <div className="incident-item">
+</div>
 
-                  <div className="incident-status warning" />
-
-                  <div className="incident-content">
-
-                    <div className="incident-title-row">
-
-                      <strong>
-                        CV-2026-08420
-                      </strong>
-
-                      <span className="severity critical">
-                        CRITICAL
-                      </span>
-
-                    </div>
-
-                    <p>
-                      Robbery · North District
-                    </p>
-
-                  </div>
-
-                  <span className="incident-time">
-                    34m
-                  </span>
-
-                </div>
-
-
-                <div className="incident-item">
-
-                  <div className="incident-status medium" />
-
-                  <div className="incident-content">
-
-                    <div className="incident-title-row">
-
-                      <strong>
-                        CV-2026-08419
-                      </strong>
-
-                      <span className="severity medium">
-                        MEDIUM
-                      </span>
-
-                    </div>
-
-                    <p>
-                      Vehicle Theft · East District
-                    </p>
-
-                  </div>
-
-                  <span className="incident-time">
-                    1h
-                  </span>
-
-                </div>
-
-
-                <div className="incident-item">
-
-                  <div className="incident-status high" />
-
-                  <div className="incident-content">
-
-                    <div className="incident-title-row">
-
-                      <strong>
-                        CV-2026-08418
-                      </strong>
-
-                      <span className="severity high">
-                        HIGH
-                      </span>
-
-                    </div>
-
-                    <p>
-                      Fraud · West District
-                    </p>
-
-                  </div>
-
-                  <span className="incident-time">
-                    2h
-                  </span>
-
-                </div>
-
-
-              </div>
-
-            </div>
-
-
-          </section>
+</section>
 
 </>
 
